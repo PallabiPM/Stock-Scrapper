@@ -21,13 +21,23 @@ def get_finviz_data(ticker: str) -> Dict:
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        def extract_metric(label: str):
-            cell = soup.find(text=label)
-            return cell.find_next("td").text.strip() if cell else "N/A"
+        # Extract metrics from the snapshot table
+        table = soup.find("table", class_="snapshot-table2")
+        if not table:
+            result["error"] = "Data table not found"
+            return result
 
-        result["price"] = extract_metric("Price")
-        result["pe_ratio"] = extract_metric("P/E")
-        result["beta"] = extract_metric("Beta")
+        tds = table.find_all("td")
+        data = {}
+        for i in range(0, len(tds) - 1, 2):
+            key = tds[i].text.strip()
+            value = tds[i+1].text.strip()
+            data[key] = value
+
+        # Extract specific metrics
+        result["price"] = data.get("Price", "N/A")
+        result["pe_ratio"] = data.get("P/E", "N/A")
+        result["beta"] = data.get("Beta", "N/A")
 
     except Exception as e:
         result["error"] = str(e)
