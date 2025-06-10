@@ -2,3 +2,6 @@ fastapi
 uvicorn
 beautifulsoup4
 requests
+yahooquery==2.3.4
+pandas==2.2.2
+
