@@ -1,12 +1,19 @@
 import time
 import pandas as pd
 from yahooquery import Ticker
+from fastapi import FastAPI
+from typing import List
 
-def read_tickers(file_path):
-    with open(file_path, 'r') as file:
-        return [line.strip().upper() for line in file if line.strip()]
+app = FastAPI()
 
-def fetch_metrics(ticker):
+def read_tickers(file_path: str = "tickers.txt") -> List[str]:
+    try:
+        with open(file_path, "r") as f:
+            return [line.strip().upper() for line in f if line.strip()]
+    except FileNotFoundError:
+        return []
+
+def fetch_metrics(ticker: str) -> dict:
     try:
         t = Ticker(ticker)
         quote = t.quote.get(ticker, {})
@@ -21,19 +28,15 @@ def fetch_metrics(ticker):
     except Exception as e:
         return {"ticker": ticker, "error": str(e)}
 
-def main():
-    tickers = read_tickers("tickers.txt")
+@app.get("/screener")
+def run_screener():
+    tickers = read_tickers()
+    if not tickers:
+        return {"error": "tickers.txt is missing or empty"}
+
     results = []
-
     for ticker in tickers:
-        print(f"Fetching: {ticker}")
-        data = fetch_metrics(ticker)
-        results.append(data)
-        time.sleep(2)  # Delay to avoid rate limiting
+        results.append(fetch_metrics(ticker))
+        time.sleep(2)  # Respect rate limits
 
-    df = pd.DataFrame(results)
-    df.to_csv("output.csv", index=False)
-    print("Saved to output.csv")
-
-if __name__ == "__main__":
-    main()
+    return {"data": results}
