@@ -16,14 +16,18 @@ def read_tickers(file_path: str = "tickers.txt") -> List[str]:
 def fetch_metrics(ticker: str) -> dict:
     try:
         t = Ticker(ticker)
-        quote = t.quote.get(ticker, {})
-        summary = t.summary_detail.get(ticker, {})
+        modules = t.all_modules.get(ticker, {})
+        
+        # Safely get nested data
+        price = modules.get("price", {}).get("regularMarketPrice", "N/A")
+        pe_ratio = modules.get("summaryDetail", {}).get("trailingPE", "N/A")
+        beta = modules.get("summaryDetail", {}).get("beta", "N/A")
 
         return {
             "ticker": ticker,
-            "price": quote.get("regularMarketPrice", "N/A"),
-            "pe_ratio": quote.get("trailingPE", "N/A"),
-            "beta": summary.get("beta", "N/A")
+            "price": price,
+            "pe_ratio": pe_ratio,
+            "beta": beta
         }
     except Exception as e:
         return {"ticker": ticker, "error": str(e)}
@@ -37,6 +41,6 @@ def run_screener():
     results = []
     for ticker in tickers:
         results.append(fetch_metrics(ticker))
-        time.sleep(2)  # Respect rate limits
+        time.sleep(2)  # Delay to avoid rate limits
 
     return {"data": results}
