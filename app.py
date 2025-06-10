@@ -90,13 +90,12 @@ def scrape():
     url = build_url(filters)
     
     chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    # Unique user data directory per request to avoid conflicts
-    chrome_options.add_argument(f"--user-data-dir=/tmp/selenium_user_data_{os.getpid()}")
+    chrome_options.binary_location = "/usr/bin/google-chrome-stable"
     
-    service = Service(ChromeDriverManager().install())
+    service = Service("/usr/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     try:
